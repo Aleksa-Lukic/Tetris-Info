@@ -1,0 +1,184 @@
+# Configuration
+var playfield_size = {"x": 10, "y": 20};
+
+var block_size = math.floor(math.min(
+	canvas.height()/(playfield_size["y"]+2), 
+	canvas.width()/(playfield_size["x"]+2)
+	));
+
+# We define the outline to be 1/8 of the block size
+var outline_size = block_size/8;
+
+var colors = {
+    "f": {"base": [119, 119, 119], "light": [153, 153, 153], "dark": [51, 51, 51]},
+    "o": {"base": [204, 204, 0], "light": [255, 255, 0], "dark": [153, 153, 0]},
+    "t": {"base": [153, 0, 204], "light": [204, 0, 255], "dark": [102, 0, 153]},
+    "s": {"base": [0, 204, 0], "light": [0, 255, 0], "dark": [0, 153, 0]},
+    "z": {"base": [204, 0, 0], "light": [255, 0, 0], "dark": [153, 0, 0]},
+    "j": {"base": [204, 0, 0], "light": [255, 0, 0], "dark": [153, 0, 0]},
+    "l": {"base": [204, 102, 0], "light": [255, 136, 0], "dark": [153, 68, 0]},
+    "i": {"base": [0, 204, 204], "light": [0, 255, 255], "dark": [0, 153, 153]},
+};
+var tetrominos = {
+    "o": [[
+            [0,0,0,0],
+            [0,"o","o",0],
+            [0,"o","o",0],
+            [0,0,0,0],
+        ]],
+    "t":[
+            # The first rotation of the tetromino
+            [
+                [ 0,  0,  0, 0 ], # the first row
+                ["t","t","t",0 ], # the second row
+                [ 0, "t", 0, 0 ]  # the third row
+            ],
+            # The other three rotations
+            [[0,"t",0,0],["t","t",0,0],[0,"t",0,0]],
+            [[0,"t",0,0],["t","t","t",0],[0,0,0,0]],
+            [[0,"t",0,0],[0,"t","t",0],[0,"t",0,0]]
+        ],
+     "s":[
+            [[0,0,0,0],[0,"s","s",0],["s","s",0,0]],
+            [["s",0,0,0],["s","s",0,0],[0,"s",0,0]]
+        ],
+    "z":[
+            [[0,0,0,0],["z","z",0,0],[0,"z", "z",0]],
+            [[0,"z",0,0],["z","z",0,0],["z",0,0,0]]
+        ],
+    "j":[
+            [[0,0,0,0],["j","j","j",0],[0,0,"j",0]],
+            [[0,"j",0,0],[0,"j",0,0],["j","j",0,0]],
+            [["j",0,0,0],["j","j","j",0],[0,0,0,0]],
+            [[0,"j","j",0],[0,"j",0,0],[0,"j",0,0]]
+        ],
+    "l":[
+            [[0,0,0,0],["l","l","l",0],["l",0,0,0]],
+            [["l","l",0,0],[0,"l",0,0],[0,"l",0,0]],
+            [[0,0,"l",0],["l","l","l",0],[0,0,0,0]],
+            [[0,"l",0,0],[0,"l",0,0],[0,"l","l",0]]
+        ],
+    "i":[
+            [[0,0,0,0],[0,0,0,0],["i","i","i","i"],[0,0,0,0]],
+            [[0,"i",0,0],[0,"i",0,0],[0,"i",0,0],[0,"i",0,0]],
+        ]
+};
+
+
+
+class Playfield {
+    public:
+        var playfield;
+        var playfield_size_x;
+        var playfield_size_y;
+
+    public:
+        constructor(playfield, playfield_size_x, playfield_size_y) {
+            this.playfield = playfield;
+            this.playfield_size_x = playfield_size_x;
+            this.playfield_size_y = playfield_size_y;
+        }
+        
+        function init_playfield() {
+            this.playfield.push(Array(this.playfield_size_x + 2, "f"));
+            for var i in 0:this.playfield_size_y do {
+                var row = ["f"];
+                for var j in 0:this.playfield_size_x do row.push(0);
+                row.push("f");
+                this.playfield.push(row);
+            }
+            this.playfield.push(Array(this.playfield_size_x + 2, "f"));
+            return this.playfield;
+        }
+}
+
+function insert_tetromino(playfield, column, row, rotation, type){
+    var tetromino = tetrominos[type][rotation];
+
+    for var i in 0:tetromino.size() do
+        for var j in 0:tetromino[i].size() do
+            if tetromino[i][j] != 0 then playfield[column + i][row + j] = tetromino[i][j];
+}
+
+function remove_tetromino(playfield, column, row, rotation, type){
+    var tetromino = tetrominos[type][rotation];
+
+    for var i in 0:tetromino.size() do
+        for var j in 0:tetromino[i].size() do
+            if tetromino[i][j] != 0 then playfield[column + i][row + j] = 0;
+}
+
+function check_collision(playfield, column, row, rotation, type){
+	 var tetromino = tetrominos[type][rotation];
+	 
+	 for var i in 0:tetromino.size() do
+        for var j in 0:tetromino[i].size() do {
+			if tetromino[i][j] != 0 then
+			 	if playfield[column + i][row + j] != 0 then
+			return true;
+	}
+	return false;
+}
+
+function draw_block(column, row, color) {
+    var pos_x = row * block_size;
+    var pos_y = column * block_size;
+
+    # lighter edges
+    canvas.setFillColor(colors[color]["light"][0]/255,
+                        colors[color]["light"][1]/255,
+                        colors[color]["light"][2]/255);
+    canvas.fillRect(pos_x, pos_y, block_size, block_size);
+
+    # triangle with dark color for the area bottom right
+    canvas.setFillColor(colors[color]["dark"][0]/255,
+                        colors[color]["dark"][1]/255,
+                        colors[color]["dark"][2]/255);
+    canvas.fillArea([
+                        [pos_x + block_size, pos_y],
+                        [pos_x, pos_y + block_size],
+                        [pos_x + block_size, pos_y + block_size]
+                    ]);
+
+    # smaller square in the middle
+    canvas.setFillColor(colors[color]["base"][0] / 255,
+                        colors[color]["base"][1] / 255,
+                        colors[color]["base"][2]/255);
+    canvas.fillRect(
+        pos_x+outline_size,
+        pos_y+outline_size,
+        block_size-2*outline_size,
+        block_size-2*outline_size
+    );
+}
+var x = Integer((playfield_size["x"] + 2)/2 - 2);
+var y = 1;
+var rotation = 0;
+var type = "s";
+
+
+while true do {
+	var playfield = [];
+	var playfield_instance = Playfield(playfield,playfield_size["x"], playfield_size["y"]);
+	playfield_instance.init_playfield();
+    # reset canvas
+    canvas.setFillColor(1, 1, 1);
+    canvas.clear();
+
+    insert_tetromino(playfield, y, x, rotation, type);
+
+    for var column in 0:playfield.size() do
+        for var row in 0:playfield[column].size() do
+            if (playfield[column][row] != 0) then draw_block(column, row, playfield[column][row]);
+
+    remove_tetromino(playfield, y, x, rotation, type);
+	
+	if check_collision(playfield, y+1, x, rotation, type) == true then break;
+
+      # change the y position of the block
+    y = y + 1;
+    #rotation = (rotation + 1) % tetrominos[type].size();
+
+    # wait so we see something
+    wait(500);
+}
