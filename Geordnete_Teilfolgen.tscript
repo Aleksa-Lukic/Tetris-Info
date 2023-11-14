@@ -1,0 +1,57 @@
+# Der Parameter a ist ein Array.
+# Alle Einträge des Arrays sind Zeichenketten.
+# Als Zeichenketten kommen nur gültige Farbnamen aus der obigen Tabelle vor.
+# Keine Farbe kommt mehr als einmal vor.
+# Ist eine Eigenschaft nicht erfüllt, dann soll eine Ausnahme (Exception) geworfen werden.
+
+function is_valid(a) 
+{
+	# Errors
+	var NotAnArrayError = "Ungültige Eingabe: Kein Array";
+	var NotAllStringsError = "Ungültige Eingabe: Nicht alle Einträge sind Zeichenketten";
+	var InvalidColorError = "Ungültige Eingabe: Ungültige Farbnamen enthalten";
+	var DuplicateColorError = "Ungültige Eingabe: Duplikate in den Farben gefunden";
+	
+	# Farben 
+ 	var colors = ["red", "orange", "brown", "white", "cyan", "green", "yellow", "blue", "black", "pink"];	
+	
+	# Checkt ob Parameter a ein Array ist.
+	if Type(a) != Array then throw NotAnArrayError;		
+	
+	# Checkt ob  Alle einträge Arrays sind.
+	for var element in a do {
+		if Type(element) != String then throw NotAllStringsError; }
+	
+	# Checkt alle Zeichenketten ob sie gültige Farbnamen aus der obigen Tabelle sind.
+	for var i in a do 
+	{
+		var found = false;
+		for var j in colors do
+		{
+			if i == j then 
+			{
+			found = true;
+			break;
+			}
+		}
+	
+	if not found then throw InvalidColorError;
+	}
+	
+	for var i in a do
+	{
+		var count = 0;
+		for var j in a do
+		{
+			if i == j then
+			{
+				count += 1;
+				if count > 1 then throw DuplicateColorError;
+			}
+		}
+	}
+	
+}
+
+var b = ["red", "white", "white"];
+is_valid(b);
